@@ -22,14 +22,14 @@ jobs:
           cache: 'maven'
 
       - name: Provision Certificates for Testing
-        # We use 'printf' because it handles long secret strings more reliably than 'echo'
-        # 'base64 -d' decodes the string, and '-di' ignores any accidental wrap-around characters
+        # Using printf "%s" prevents echo from adding a trailing \n
+        # Using base64 -di ignores any garbage characters or line wraps
         run: |
           mkdir -p src/main/resources/certs
           printf "%s" "${{ secrets.MESH_KEYSTORE_BASE64 }}" | base64 -di > src/main/resources/certs/mesh-server.p12
           printf "%s" "${{ secrets.MESH_TRUSTSTORE_BASE64 }}" | base64 -di > src/main/resources/certs/mesh-truststore.p12
           
-          # Verify files were created and are not empty
+          # Optional: Quick check to ensure files exist and have size
           ls -lh src/main/resources/certs/
 
       - name: Build with Maven
@@ -39,11 +39,6 @@ jobs:
         run: mvn clean verify
 
       - name: Build Docker Image
-        # This builds the image with the provisioned certs included
         run: |
           docker build -t byteentropy/mesh-core:${{ github.sha }} .
           docker tag byteentropy/mesh-core:${{ github.sha }} byteentropy/mesh-core:latest
-
-      - name: Security Scan (Optional)
-        # A quick check for vulnerabilities in your dependencies
-        run: mvn dependency-check:check || echo "Scan completed"

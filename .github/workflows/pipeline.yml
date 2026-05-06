@@ -22,14 +22,14 @@ jobs:
           cache: 'maven'
 
       - name: Provision Certificates for Testing
-        # Using printf "%s" prevents echo from adding a trailing \n
-        # Using base64 -di ignores any garbage characters or line wraps
+        # printf "%s" ensures NO trailing newline is added to the stream
+        # base64 -di ignores garbage characters that might have snuck into the secret
         run: |
           mkdir -p src/main/resources/certs
           printf "%s" "${{ secrets.MESH_KEYSTORE_BASE64 }}" | base64 -di > src/main/resources/certs/mesh-server.p12
           printf "%s" "${{ secrets.MESH_TRUSTSTORE_BASE64 }}" | base64 -di > src/main/resources/certs/mesh-truststore.p12
           
-          # Optional: Quick check to ensure files exist and have size
+          # Verification step to check file creation in logs
           ls -lh src/main/resources/certs/
 
       - name: Build with Maven

@@ -5,6 +5,8 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  # This enables the manual "Run workflow" button in GitHub UI
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -22,13 +24,16 @@ jobs:
           cache: 'maven'
 
       - name: Provision Certificates for Testing
-        # printf "%s" ensures NO trailing newline is added to the stream
-        # base64 -di ignores garbage characters that might have snuck into the secret
         run: |
           mkdir -p src/main/resources/certs
-          echo "${{ secrets.MESH_KEYSTORE_BASE64 }}" | sed 's/[[:space:]]//g' | base64 -d > src/main/resources/certs/mesh-server.p12
-          echo "${{ secrets.MESH_TRUSTSTORE_BASE64 }}" | sed 's/[[:space:]]//g' | base64 -d > src/main/resources/certs/mesh-truststore.p12          
-          # Verification step to check file creation in logs
+          
+          # Clean and Decode Keystore
+          printf "%s" "${{ secrets.MESH_KEYSTORE_BASE64 }}" | tr -d '[:space:]' | base64 -d > src/main/resources/certs/mesh-server.p12
+          
+          # Clean and Decode Truststore
+          printf "%s" "${{ secrets.MESH_TRUSTSTORE_BASE64 }}" | tr -d '[:space:]' | base64 -d > src/main/resources/certs/mesh-truststore.p12
+          
+          # Verification: Ensure files are created and have size > 0
           ls -lh src/main/resources/certs/
 
       - name: Build with Maven

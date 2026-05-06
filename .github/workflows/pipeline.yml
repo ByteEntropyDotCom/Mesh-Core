@@ -26,9 +26,8 @@ jobs:
         # base64 -di ignores garbage characters that might have snuck into the secret
         run: |
           mkdir -p src/main/resources/certs
-          printf "%s" "${{ secrets.MESH_KEYSTORE_BASE64 }}" | base64 -di > src/main/resources/certs/mesh-server.p12
-          printf "%s" "${{ secrets.MESH_TRUSTSTORE_BASE64 }}" | base64 -di > src/main/resources/certs/mesh-truststore.p12
-          
+          echo "${{ secrets.MESH_KEYSTORE_BASE64 }}" | sed 's/[[:space:]]//g' | base64 -d > src/main/resources/certs/mesh-server.p12
+          echo "${{ secrets.MESH_TRUSTSTORE_BASE64 }}" | sed 's/[[:space:]]//g' | base64 -d > src/main/resources/certs/mesh-truststore.p12          
           # Verification step to check file creation in logs
           ls -lh src/main/resources/certs/
 
